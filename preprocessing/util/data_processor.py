@@ -3,11 +3,16 @@ import h5py
 from pathlib import Path
 from tqdm import tqdm
 import pandas as pd
-from sklearn.model_selection import train_test_split
 import sqlite3
 
 
 class DataProcessor:
+    """
+    A class to process the Million Song Dataset (MSD) into an easy-to-manipulate format.
+
+    This class does very basic data processing, and is intended to be used as a starting point for more complex
+    data cleaning.
+    """
 
     def __init__(self, data_dir, mbtag_db_path=None, read_subset=True, file_extension='.h5', desired_fields=None, debug_messages=False):
         self.data_dir = data_dir
@@ -114,18 +119,10 @@ class DataProcessor:
         df = df.merge(mbtags_df, on='artist_id', how='left')
         return df
 
-
-    def process_dataset_df(self, train_size=0.9):
+    def process_dataset_df(self):
         """
         Processes the dataset and returns a Pandas DataFrame.
-
-        Args:
-            train_split (float): The percentage of the dataset to use for training.
-
-        Returns:
-            Tuple[pd.DataFrame, pd.DataFrame]: A tuple containing the training and testing DataFrames.
         """
         df = self._read_dataset()
         df = self._join_mbtags(df)
-        train_df, test_df = train_test_split(df, train_size=train_size)
-        return train_df, test_df
+        return df
