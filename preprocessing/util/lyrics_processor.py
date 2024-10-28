@@ -22,18 +22,18 @@ class LyricsProcessor:
     def ensure_song_id_column(self):
         """Adds a song_id column to the lyrics table if it doesn't exist."""
         cursor = self.conn.cursor()
- 
+
         cursor.execute("PRAGMA table_info(lyrics);")
         columns = [column[1] for column in cursor.fetchall()]
         print("Columns in 'lyrics' table:", columns)  # Debug: Print existing columns
-        
+
         if 'song_id' not in columns:
             cursor.execute("ALTER TABLE lyrics ADD COLUMN song_id TEXT;")
             cursor.execute("UPDATE lyrics SET song_id = track_id;")
             self.conn.commit()
         else:
             print("'song_id' column already exists.")
-        
+
         cursor.close()
 
 

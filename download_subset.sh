@@ -2,8 +2,10 @@
 
 SUBSET_URL="http://labrosa.ee.columbia.edu/~dpwe/tmp/millionsongsubset.tar.gz"
 MBTAG_URL="http://www.ee.columbia.edu/~thierry/artist_term.db"
+LYRICS_URL="http://millionsongdataset.com/sites/default/files/AdditionalFiles/mxm_dataset.db"
 SUBSET_OUTPUT="${2:-$(basename "$SUBSET_URL")}"
 MBTAG_OUTPUT="${2:-$(basename "$MBTAG_URL")}"
+LYRICS_OUTPUT="${2:-$(basename "$LYRICS_URL")}"
 
 # === Configuration ===
 DATA_DIR="data"
@@ -22,15 +24,15 @@ fi
 
 # --- Using wget ---
 download_msd_subset() {
-    # echo "Starting download from: $SUBSET_URL"
-    # wget -O "$DATA_DIR/$SUBSET_OUTPUT" "$SUBSET_URL"
+    echo "Starting download from: $SUBSET_URL"
+    wget -O "$DATA_DIR/$SUBSET_OUTPUT" "$SUBSET_URL"
 
-    # if [ $? -eq 0 ]; then
-    #     echo "Download completed successfully. Saved as '$DATA_DIR/$SUBSET_OUTPUT'."
-    # else
-    #     echo "Download failed."
-    #     exit 1
-    # fi
+    if [ $? -eq 0 ]; then
+        echo "Download completed successfully. Saved as '$DATA_DIR/$SUBSET_OUTPUT'."
+    else
+        echo "Download failed."
+        exit 1
+    fi
 
     echo "Starting download from: $MBTAG_URL"
     wget --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -O "$DATA_DIR/$MBTAG_OUTPUT" "$MBTAG_URL"
@@ -41,9 +43,19 @@ download_msd_subset() {
         echo "Download failed."
         exit 1
     fi
+
+    echo "Starting download from: $LYRICS_URL"
+    wget --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -O "$DATA_DIR/$LYRICS_OUTPUT" "$LYRICS_URL"
+
+    if [ $? -eq 0 ]; then
+        echo "Download completed successfully. Saved as '$DATA_DIR/$LYRICS_OUTPUT'."
+    else
+        echo "Download failed."
+        exit 1
+    fi
 }
 
-extract_tar_gz() {
+extract_tags_tar_gz() {
     FILE_PATH="$DATA_DIR/$SUBSET_OUTPUT"
 
     # Check if the file exists
@@ -84,7 +96,7 @@ delete_msd_archive() {
 
 # === Execute Download ===
 download_msd_subset
-extract_tar_gz
+extract_tags_tar_gz
 delete_msd_archive
 
 echo "All operations completed successfully."
