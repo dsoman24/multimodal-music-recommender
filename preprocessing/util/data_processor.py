@@ -68,7 +68,7 @@ class DataProcessor:
                         for dataset_name in self.desired_fields:
                             dataset = h5[dataset_name]
                             if len(self.desired_fields[dataset_name]) == 0:
-                                track[dataset_name] = dataset[dataset_name]
+                                track[dataset_name] = list(dataset)
                             else:
                                 for field in self.desired_fields[dataset_name]:
                                     try:
@@ -84,9 +84,10 @@ class DataProcessor:
                                                 track[field] = dataset[field][i]
                                     except KeyError:
                                         track[field] = None  # or set a default value
-                            data.append(track)
+                        data.append(track)
             except Exception as e:
                 self._output_debug_message(f"Error reading {file_path}: {e}")
+                break
 
         df = pd.DataFrame(data)
         return df
