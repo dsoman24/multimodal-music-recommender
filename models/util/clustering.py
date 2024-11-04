@@ -27,6 +27,8 @@ def plot_elbow_of_encoding_cluster(df, col, k_max):
     plt.plot(range(2, k_max), distorsions)
     plt.grid(True)
     plt.title('Elbow curve')
+    plt.xlabel('Number of clusters')
+    plt.ylabel('Intertia')
 
 def get_sillhouette_score(kmeans, df, col):
     labels = kmeans.labels_
