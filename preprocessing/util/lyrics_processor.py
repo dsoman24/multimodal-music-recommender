@@ -1,5 +1,9 @@
 import sqlite3
 import pandas as pd
+from transformers import RobertaTokenizer, RobertaModel
+from sklearn.feature_extraction.text import TfidfVectorizer
+import torch
+from tqdm import tqdm
 
 class LyricsProcessor:
 
@@ -7,6 +11,9 @@ class LyricsProcessor:
         self.db_path = db_path
         self.conn = None
         self.lyrics_df = None
+        self.lyrics_pivot = None
+        # self.tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
+        # self.model = RobertaModel.from_pretrained("roberta-base")
 
     def connect_db(self):
         """Connects to the SQLite database."""
