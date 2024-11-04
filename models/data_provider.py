@@ -2,11 +2,15 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), '..')))
 import pandas as pd
-from tqdm import tqdm
 import preprocessing.util.encoding as encoding
 import models.util.clustering as clustering
 
 class DataProvider:
+    """
+    This class is the first stage of the model architecture training pipeline.
+
+    The primary purpose is to generate the 'ground truth' training classes.
+    """
 
     def __init__(
             self,
@@ -33,7 +37,7 @@ class DataProvider:
         self.metadata_df = pd.read_pickle(os.path.join(intermediate_data_dir, 'metadata.pkl'))
         self._print_debug("Reading music_analysis...")
         self.music_analysis_df = pd.read_pickle(os.path.join(intermediate_data_dir, 'music_analysis.pkl'))
-        # Embeddings config
+        # w2v embeddings config
         self.label_w2v_embedding_size = label_w2v_embedding_size
         self.label_w2v_window_size = label_w2v_window_size
         self.label_w2v_min_count = label_w2v_min_count
