@@ -6,8 +6,10 @@ import pandas as pd
 import sqlite3
 
 
+@DeprecationWarning
 class DataProcessor:
     """
+    DEPRECATED
     A class to process the Million Song Dataset (MSD) into an easy-to-manipulate format.
 
     This class does very basic data processing, and is intended to be used as a starting point for more complex
