@@ -21,6 +21,15 @@ python3 -m  pipreqs.pipreqs
 
 ### Downloading the Million Song Dataset
 
+To download the dataset used by this project, run:
+
+```bash
+chmod +x download_dataset.sh
+./download_dataset.sh
+```
+
+This download does not download the full MSD, only the necessary files (tags, lyrics, metadata, user history)
+
 To download the MSD subset, run:
 ```bash
 chmod +x download_subset.sh

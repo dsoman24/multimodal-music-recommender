@@ -6,12 +6,13 @@ class UserDataProcessor:
     def __init__(self, data_dir, debug_messages=False):
         self.data_dir = data_dir
         self.debug_messages = debug_messages
+        self.df = None
 
-    def _output_debug_message(self, message):
+    def print_debug(self, message):
         if self.debug_messages:
             print(message)
 
-    def _read_dataset(self):
+    def read(self):
         """
         Reads the user triplets dataset.
         """
@@ -24,15 +25,14 @@ class UserDataProcessor:
                     'song_id': song_id,
                     'play_count': int(play_count)
                 })
-            self._output_debug_message(f"Read {len(data)} user triplets.")
+            self.print_debug(f"Read {len(data)} user triplets.")
             return data
-        self._output_debug_message("Failed to read user triplets.")
+        self.print_debug("Failed to read user triplets.")
         return []
 
-    def process_user_data(self):
+    def process(self):
         """
         Processes the user data and returns a list of dictionaries.
         """
-        data = self._read_dataset()
-        df = pd.DataFrame(data)
-        return df
+        data = self.read()
+        self.df = pd.DataFrame(data)
