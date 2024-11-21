@@ -27,6 +27,7 @@ class Processor:
         self.tag_processor = TagProcessor(data_dir, debug_messages)
         self.metadata_processor = MetadataProcessor(data_dir, debug_messages)
         self.tagged_metadata_df = None  # contains track metadata and tags
+        self.untagged_metadata_df = None
         self.lyrics_df = None
         self.user_data_df = None
         self.labels_df = None
@@ -45,7 +46,8 @@ class Processor:
         metadata_df = self.metadata_processor.df
         self.tagged_metadata_df = metadata_df.merge(tag_df, on='artist_id', how='left')
         self.tagged_metadata_df = self.tagged_metadata_df.dropna(subset=['mbtag'])
-        self.labels_df = self.tagged_metadata_df[['mbtag']]
+        self.untagged_metadata_df = metadata_df[~metadata_df['artist_id'].isin(self.tagged_metadata_df['artist_id'])]
+        self.labels_df = self.tagged_metadata_df[['track_id', 'mbtag']]
 
     def _print_debug(self, message):
         if self.debug_messages:
@@ -61,3 +63,4 @@ class Processor:
         self.user_data_df.to_pickle(os.path.join(output_dir, 'user_data.pkl'))
         self.tagged_metadata_df.to_pickle(os.path.join(output_dir, 'tagged_metadata.pkl'))
         self.lyrics_df.to_pickle(os.path.join(output_dir, 'lyrics.pkl'))
+        self.untagged_metadata_df.to_pickle(os.path.join(output_dir, 'untagged_metadata.pkl'))

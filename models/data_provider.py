@@ -53,6 +53,7 @@ class DataProvider:
         self.clustering_method = clustering_method
         self.labels_df = None
         self.tagged_metadata_df = None
+        self.untagged_metadata_df = None
         self.lyrics_df = None
         self.user_data_df = None
 
@@ -60,8 +61,10 @@ class DataProvider:
         intermediate_data_dir = os.path.join(self.data_dir, INTERMEDIATE_DATA_DIR_NAME)
         self._print_debug("Reading labels.")
         self.labels_df = pd.read_pickle(os.path.join(intermediate_data_dir, 'labels.pkl'))
-        self._print_debug("Reading metadata.")
+        self._print_debug("Reading tagged metadata.")
         self.tagged_metadata_df = pd.read_pickle(os.path.join(intermediate_data_dir, 'tagged_metadata.pkl'))
+        self._print_debug("Reading untagged metadata.")
+        self.untagged_metadata_df = pd.read_pickle(os.path.join(intermediate_data_dir, 'untagged_metadata.pkl'))
         self._print_debug("Reading lyrics.")
         self.lyrics_df = pd.read_pickle(os.path.join(intermediate_data_dir, 'lyrics.pkl'))
         self._print_debug("Reading user data.")
@@ -88,7 +91,7 @@ class DataProvider:
 
     def generate_training_classes(self, cluster_config={}):
         """
-        Constructs training classes on the mbtag labels via embeddings and clustering and are added to the labels_df.
+        Constructs training classes on the mbtag labels via embeddings and clustering and are added to the `labels_df`.
 
         Embeddings are created according to `self.label_embedding_technique`.
 
