@@ -6,35 +6,36 @@ import torch
 from transformers import RobertaTokenizer, RobertaModel
 
 DATA_DIR_NAME = 'data'
-INTERMEDIATE_DATA_DIR_NAME = 'intermediate_output'
 EMBEDDING_DIR_NAME = 'embeddings'
 LABEL_EMBEDDING_DIR_NAME = 'label_embeddings'
 EMBEDDING_FILE_PREFIX = 'embedding_'
 
-class LabelEncoder:
+class TextEncoder:
 
     def __init__(
             self,
             data_dir=DATA_DIR_NAME,
-            label_embedding_technique='w2v',
+            embedding_technique='w2v',
             config={},
             load_from_file=False,
             save_to_file=False,
+            file_dir_name=LABEL_EMBEDDING_DIR_NAME,
             aggregation_method='mean',
             debug=False
         ):
         self.data_dir = data_dir
-        self.label_embedding_technique = label_embedding_technique
-        if label_embedding_technique not in ('w2v', 'multihot', 'roberta'):
-            label_embedding_technique = 'w2v'
+        self.embedding_technique = embedding_technique
+        if embedding_technique not in ('w2v', 'multihot', 'roberta'):
+            embedding_technique = 'w2v'
         self.aggregation_method = aggregation_method
-        if aggregation_method not in ('mean', 'sum'):
+        if aggregation_method not in ('mean', 'sum', 'concat'):
             aggregation_method = 'mean'
         self.config = config
         self.debug = debug
         self.load_from_file = load_from_file
         self.save_to_file = save_to_file
         self.embedding_dict = None
+        self.file_dir_name = file_dir_name
 
 
     def _print_debug(self, message):
@@ -43,24 +44,22 @@ class LabelEncoder:
 
     def generate_embeddings(self, sentences):
         """
-        Generates embeddings dictionary and assigns the self.embeddings attribute.
-
-        Optionally reads from file if self.load_from_file is True.
+        Reads embeddings from file or generates new embeddings dictionary and assigns the self.embeddings attribute.
         """
         if self.load_from_file:
-            self.embedding_dict = self._read_label_embedding_dict()
+            self.embedding_dict = self._read_embedding_dict()
         if self.embedding_dict is None:
-            self._print_debug("Generating label embeddings, not reading from file.")
-            if self.label_embedding_technique == 'w2v':
+            self._print_debug("Generating embeddings, not reading from file.")
+            if self.embedding_technique == 'w2v':
                 self.embedding_dict = self._generate_w2v_embeddings(sentences)
-            elif self.label_embedding_technique == 'roberta':
+            elif self.embedding_technique == 'roberta':
                 self.embedding_dict =  self._generate_roberta_embeddings(sentences)
-            elif self.label_embedding_technique == 'multihot':
+            elif self.embedding_technique == 'multihot':
                 self.embedding_dict =  self._generate_multihot_embeddings(sentences)
             else:
-                raise ValueError(f"Invalid label embedding technique: {self.label_embedding_technique}")
+                raise ValueError(f"Invalid embedding technique: {self.embedding_technique}")
             if self.save_to_file and self.embedding_dict is not None:
-                self._save_label_embedding_dict()
+                self._save_embedding_dict()
 
     def _generate_w2v_embeddings(self, sentences):
         """
@@ -102,10 +101,18 @@ class LabelEncoder:
             embedding_dict[label] = np.eye(len(unique_labels))[i]
         return embedding_dict
 
+    def get_embedding(self, label):
+        """
+        Returns the embedding for a single label.
+        """
+        return self.embedding_dict[label] if label in self.embedding_dict else None
+
     def aggregate_embeddings(self, sentence):
         """
         Returns an aggregate embedding for a list of labels (sentence).
         """
+        if type(sentence) == str:
+            sentence = sentence.split()
         vectors = [self.embedding_dict[label] for label in sentence if label in self.embedding_dict]
         if not vectors:
             return np.zeros(next(iter(self.embedding_dict.values())).shape)
@@ -113,25 +120,27 @@ class LabelEncoder:
             return np.mean(vectors, axis=0)
         elif self.aggregation_method == 'sum':
             return np.sum(vectors, axis=0)
+        elif self.aggregation_method == 'concat':
+            return np.concatenate(vectors)
         return None
 
-    def _save_label_embedding_dict(self):
+    def _save_embedding_dict(self):
         file_dir = os.path.join(
             self.data_dir,
-            INTERMEDIATE_DATA_DIR_NAME,
-            LABEL_EMBEDDING_DIR_NAME,
+            EMBEDDING_DIR_NAME,
+            self.file_dir_name,
         )
         os.makedirs(file_dir, exist_ok=True)
-        full_path = os.path.join(file_dir, f'{EMBEDDING_FILE_PREFIX}{self.label_embedding_technique}.pkl')
+        full_path = os.path.join(file_dir, f'{EMBEDDING_FILE_PREFIX}{self.embedding_technique}.pkl')
         self._print_debug(f"Saving label embedding dictionary to {full_path}.")
         pd.to_pickle(self.embedding_dict, full_path)
 
-    def _read_label_embedding_dict(self):
+    def _read_embedding_dict(self):
         path = os.path.join(
             self.data_dir,
-            INTERMEDIATE_DATA_DIR_NAME,
-            LABEL_EMBEDDING_DIR_NAME,
-            f'{EMBEDDING_FILE_PREFIX}{self.label_embedding_technique}.pkl'
+            EMBEDDING_DIR_NAME,
+            self.file_dir_name,
+            f'{EMBEDDING_FILE_PREFIX}{self.embedding_technique}.pkl'
         )
         self._print_debug(f"Reading label embedding dictionary from {path}.")
         if not os.path.exists(path):

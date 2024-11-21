@@ -2,13 +2,12 @@ import os
 import pandas as pd
 from tqdm import tqdm
 import models.util.encoding as encoding
-from models.util.encoding import LabelEncoder
+from models.util.encoding import TextEncoder
 import models.util.clustering as clustering
 import matplotlib.pyplot as plt
 
 DATA_DIR_NAME = 'data'
 INTERMEDIATE_DATA_DIR_NAME = 'intermediate_output'
-EMBEDDING_DIR_NAME = 'embeddings'
 LABEL_EMBEDDING_DIR_NAME = 'label_embeddings'
 EMBEDDING_FILE_PREFIX = 'embedding_'
 
@@ -39,12 +38,13 @@ class DataProvider:
         self.debug=debug
         if label_embedding_technique not in ('w2v', 'multihot', 'roberta'):
             label_embedding_technique = 'w2v'
-        self.label_encoder = LabelEncoder(
+        self.label_encoder = TextEncoder(
             data_dir,
             label_embedding_technique,
             embedding_config,
             load_from_file=load_embeddings_from_file,
             save_to_file=save_embeddings_to_file,
+            file_dir_name=LABEL_EMBEDDING_DIR_NAME,
             debug=debug
         )
         if clustering_method not in ('kmeans', 'dbscan'):
