@@ -49,7 +49,7 @@ class MetadataModel:
             'year'
         ]
 
-    def _generate_metadata_embeddings(self):
+    def _generate_metadata_embeddings_by_category(self):
         """
         Generates embeddings for each metadata column.
         """
@@ -64,7 +64,7 @@ class MetadataModel:
         """
         Returns metadata embeddings for each song in the dataset.
         """
-        self._generate_metadata_embeddings()
+        self._generate_metadata_embeddings_by_category()
         metadata_embeddings_df = self.metadata_df.copy()
         metadata_embeddings_df['title_embedding'] = metadata_embeddings_df['title'].apply(lambda x: self.title_encoder.aggregate_embeddings(x))
         metadata_embeddings_df['release_embedding'] = metadata_embeddings_df['release'].apply(lambda x: self.release_encoder.aggregate_embeddings(x))
@@ -75,8 +75,9 @@ class MetadataModel:
             lambda row: np.concatenate([
                 row['title_embedding'],
                 row['release_embedding'],
-                row['artist_name_embedding']
+                row['artist_name_embedding'],
+                np.array([row[col] for col in self.columns_to_append])
             ]),
             axis=1
         )
-        return metadata_embeddings_df
+        return metadata_embeddings_df[['track_id', 'metadata_embedding']]
