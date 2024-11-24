@@ -2,6 +2,8 @@ import os
 import pickle
 
 import numpy as np
+import torch
+from torch import nn
 
 # This class handles the fusion step of the model architecture pipeline.
 
@@ -18,6 +20,7 @@ class FusionStep:
             debug=False
         ):
         self.fusion_method = fusion_method
+        self.debug = debug
         if fusion_method not in (
             'concat',
             'mean',
@@ -37,7 +40,6 @@ class FusionStep:
         # np 2d matrix with training features for the fusion model.
         self.fused_vectors = None
         self.output_path = os.path.join(data_dir, output_dir)
-        self.debug = debug
 
     def _print_debug(self, message):
         if self.debug:
@@ -53,7 +55,9 @@ class FusionStep:
         """
         A component is one of the sets of vectors to be fused. This method loads multiple components.
         """
-        for component in components:
+        for i, component in enumerate(components):
+            if i > 0:
+                assert component.shape[0] == components[i - 1].shape[0], "Components must have the same number of rows."
             self.load_component(component)
 
     def fuse(self):
@@ -120,3 +124,15 @@ class FusionStep:
         file_path = os.path.join(self.output_path, 'fused_vectors.pkl')
         with open(file_path, 'wb') as f:
             pickle.dump(self.fused_vectors, f)
+
+
+class FusionModel(nn.Module):
+
+    def __init__(self, input_size, output_size):
+        super().__init__()
+        self.fc = nn.Linear(input_size, output_size)
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x):
+        x = self.fc(x)
+        return self.softmax(x)

@@ -3,6 +3,7 @@ import pandas as pd
 from tqdm import tqdm
 import models.util.encoding as encoding
 from models.util.encoding import TextEncoder
+import numpy as np
 import models.util.clustering as clustering
 import matplotlib.pyplot as plt
 
@@ -11,6 +12,7 @@ INTERMEDIATE_DATA_DIR_NAME = 'intermediate_output'
 LABEL_EMBEDDING_DIR_NAME = 'label_embeddings'
 EMBEDDING_FILE_PREFIX = 'embedding_'
 
+SEED = 42
 
 class DataProvider:
     """
@@ -55,7 +57,10 @@ class DataProvider:
         self.tagged_metadata_df = None
         self.untagged_metadata_df = None
         self.lyrics_df = None
+        # TODO: add audio_df
+        self.audio_df = None
         self.user_data_df = None
+        self.train_test_split_mask = None
 
     def load_data(self):
         intermediate_data_dir = os.path.join(self.data_dir, INTERMEDIATE_DATA_DIR_NAME)
@@ -70,9 +75,27 @@ class DataProvider:
         self._print_debug("Reading user data.")
         self.user_data_df = pd.read_pickle(os.path.join(intermediate_data_dir, 'user_data.pkl'))
 
+        # filter out records that are not in all train dataframes
+        # train dataframes are labels_df, tagged_metadata_df, lyrics_df
+        common_track_ids = set(self.labels_df['track_id']) & set(self.tagged_metadata_df['track_id']) & set(self.lyrics_df['song_id'])
+        self.labels_df = self.labels_df[self.labels_df['track_id'].isin(common_track_ids)]
+        self.tagged_metadata_df = self.tagged_metadata_df[self.tagged_metadata_df['track_id'].isin(common_track_ids)]
+        self.lyrics_df = self.lyrics_df[self.lyrics_df['song_id'].isin(common_track_ids)]
+        assert self.labels_df.shape[0] == self.tagged_metadata_df.shape[0] == self.lyrics_df.shape[0], "Dataframes do not have the same number of records."
+        num_records = self.labels_df.shape[0]
+        self.train_test_split_mask = self._train_test_split(num_records)
+
     def _print_debug(self, message):
         if self.debug:
             print(message)
+
+    def _train_test_split(self, num_records, test_size=0.2):
+        """
+        Returns a boolean mask for splitting the data into training and testing sets.
+
+        The mask is True for training records and False for testing records.
+        """
+        return np.random.choice([True, False], num_records, p=[1-test_size, test_size])
 
     def cluster(self, df, col, config={}):
         """
