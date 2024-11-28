@@ -49,7 +49,7 @@ class LyricsProcessor:
         Processes the lyrics table, creating a pivoted dataframe with word counts per track.
         """
         self.ensure_song_id_column()  # ensure song_id is present
-        query = "SELECT song_id, word, count FROM lyrics"
+        query = "SELECT song_id, word, count FROM lyrics LIMIT 10000"
         self.lyrics_df = pd.read_sql_query(query, self.conn)
         self.lyrics_pivot = self.lyrics_df.pivot_table(
             index='song_id', columns='word', values='count', fill_value=0
