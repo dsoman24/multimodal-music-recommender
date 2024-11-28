@@ -63,6 +63,7 @@ class LyricsProvider:
                 for song_id, embedding in zip(batch_song_ids, embeddings):
                     song_embeddings.append({'song_id': song_id, 'embedding': embedding})
 
+
         embeddings_df = pd.DataFrame(song_embeddings)
         return embeddings_df
 
@@ -121,29 +122,30 @@ class LyricsProvider:
         plt.show()
 
 
-    def get_tfidf_embeddings(self, lyrics_pivot, max_features=20):
+    def get_tfidf_embeddings(self, max_features=20):
         '''
         Generates TF-IDF embeddings for each song based on the pivoted lyrics data.
         '''
-        
+
         all_texts = []
         song_ids = []
 
-        for _, row in lyrics_pivot.iterrows():
+        for _, row in self.lyrics_pivot.iterrows():
             song_id = row['song_id']
-            
-            
+
+
             lyrics_text = " ".join(
                 [f"{word} " * int(count) for word, count in row.drop('song_id').items() if count > 1]
             )
-            
+
             all_texts.append(lyrics_text)
             song_ids.append(song_id)
+
 
         #
         # vectorizer = TfidfVectorizer(max_features=500)
         vectorizer = TfidfVectorizer(max_features=max_features) 
-        
+
         tfidf_matrix = vectorizer.fit_transform(all_texts)
 
         tfidf_df = pd.DataFrame(tfidf_matrix.toarray(), index=song_ids, columns=vectorizer.get_feature_names_out())
@@ -151,5 +153,4 @@ class LyricsProvider:
         tfidf_df.rename(columns={'index': 'song_id'}, inplace=True)
 
         print("TF-IDF embeddings generated.")
-        return tfidf_df
-
+        self.lyrics_df = tfidf_df
