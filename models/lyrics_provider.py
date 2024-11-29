@@ -10,6 +10,8 @@ from sklearn.cluster import DBSCAN, KMeans
 from sklearn.metrics import silhouette_score, calinski_harabasz_score
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
+import os
+import pickle
 
 class LyricsDataset(Dataset):
     def __init__(self, song_ids, texts, tokenizer, max_length=512):
@@ -154,3 +156,20 @@ class LyricsProvider:
 
         print("TF-IDF embeddings generated.")
         self.lyrics_df = tfidf_df
+
+
+    def embeddings_to_pkl(self, file_path, embeddings):
+        direc = os.path.dirname(file_path)
+        
+        if not os.path.exists(direc):
+            os.makedirs(direc)
+            print(f"Directory created")
+        else:
+            print(f"Directory exists")
+        
+        if os.path.exists(file_path):
+            print(f"Embeddings already stored in pkl file.")
+        else:
+            with open(file_path, 'wb') as pkl_file:
+                pickle.dump(embeddings, pkl_file)
+            print(f"Embeddings Saved to '{file_path}'")
