@@ -100,9 +100,9 @@ class RecommenderEvaluator:
     def __init__(self, recommender):
         self.recommender = recommender
 
-    def evaluate(self):
-        mAP = self._mean_average_precision()
-        return mAP
+    def evaluate(self, n=500):
+        mAP = self._mean_average_precision(n=n)
+        return {'mAP': mAP}
 
     def _mean_average_precision(self, n=500):
         users = self.recommender.user_data_df['user_id'].unique()

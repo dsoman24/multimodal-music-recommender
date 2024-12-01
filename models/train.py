@@ -102,6 +102,16 @@ class FusionModelTrainer:
         plt.legend()
         plt.show()
 
+    def save_plot(self, path):
+        x = [i * EVAL_RATE for i in range(1, len(self.train_accuracies) + 1)]
+        plt.plot(x, self.train_accuracies, label="Train")
+        plt.plot(x, self.test_accuracies, label="Test")
+        plt.xlabel("Epoch")
+        plt.ylabel("Accuracy")
+        plt.title("Fusion Model Training")
+        plt.legend()
+        plt.savefig(path)
+
     def get_test_inferences(self):
         self._print_debug("Getting test inferences")
         with torch.no_grad():
