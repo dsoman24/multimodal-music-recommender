@@ -128,11 +128,20 @@ class FusionStep:
 
 class FusionModel(nn.Module):
 
-    def __init__(self, input_size, output_size):
-        super().__init__()
-        self.fc = nn.Linear(input_size, output_size)
+    def __init__(self, input_size, hidden_sizes, output_size, dropout_prob=0.5):
+        super(FusionModel, self).__init__()
+        layers = []
+        current_size = input_size
+        for hidden_size in hidden_sizes:
+            layers.append(nn.Linear(current_size, hidden_size))
+            layers.append(nn.ReLU())
+            layers.append(nn.Dropout(dropout_prob))
+            current_size = hidden_size
+        layers.append(nn.Linear(current_size, output_size))
+        self.network = nn.Sequential(*layers)
         self.softmax = nn.Softmax(dim=1)
 
+
     def forward(self, x):
-        x = self.fc(x)
+        x = self.network(x)
         return self.softmax(x)

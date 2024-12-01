@@ -62,7 +62,7 @@ class DataProvider:
         self.user_data_df = None
         self.train_test_split_mask = None
 
-    def load_data(self):
+    def load_data(self, test_size=0.2):
         intermediate_data_dir = os.path.join(self.data_dir, INTERMEDIATE_DATA_DIR_NAME)
         self._print_debug("Reading labels.")
         self.labels_df = pd.read_pickle(os.path.join(intermediate_data_dir, 'labels.pkl'))
@@ -77,13 +77,14 @@ class DataProvider:
 
         # filter out records that are not in all train dataframes
         # train dataframes are labels_df, tagged_metadata_df, lyrics_df
+        # TODO: when audio_df is added, add it to the common track ids logic
         common_track_ids = set(self.labels_df['track_id']) & set(self.tagged_metadata_df['track_id']) & set(self.lyrics_df['song_id'])
         self.labels_df = self.labels_df[self.labels_df['track_id'].isin(common_track_ids)]
         self.tagged_metadata_df = self.tagged_metadata_df[self.tagged_metadata_df['track_id'].isin(common_track_ids)]
         self.lyrics_df = self.lyrics_df[self.lyrics_df['song_id'].isin(common_track_ids)]
         assert self.labels_df.shape[0] == self.tagged_metadata_df.shape[0] == self.lyrics_df.shape[0], "Dataframes do not have the same number of records."
         num_records = self.labels_df.shape[0]
-        self.train_test_split_mask = self._train_test_split(num_records)
+        self.train_test_split_mask = self._train_test_split(num_records, test_size=test_size)
 
     def _print_debug(self, message):
         if self.debug:
