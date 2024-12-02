@@ -125,23 +125,59 @@ class FusionStep:
         with open(file_path, 'wb') as f:
             pickle.dump(self.fused_vectors, f)
 
+class ResidualBlock(nn.Module):
+    def __init__(self, size, dropout_prob=0.5):
+        super().__init__()
+        self.fc1 = nn.Linear(size, size)
+        self.bn1 = nn.BatchNorm1d(size)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(dropout_prob)
+
+    def forward(self, x):
+        residual = x
+        out = self.fc1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+        out = self.dropout(out)
+        out += residual
+        return out
 
 class FusionModel(nn.Module):
 
     def __init__(self, input_size, hidden_sizes, output_size, dropout_prob=0.5):
-        super(FusionModel, self).__init__()
+        super().__init__()
         layers = []
         current_size = input_size
         for hidden_size in hidden_sizes:
             layers.append(nn.Linear(current_size, hidden_size))
-            layers.append(nn.ReLU())
-            layers.append(nn.Dropout(dropout_prob))
+            layers.append(nn.BatchNorm1d(hidden_size))
+            layers.append(ResidualBlock(hidden_size, dropout_prob))
             current_size = hidden_size
         layers.append(nn.Linear(current_size, output_size))
         self.network = nn.Sequential(*layers)
         self.softmax = nn.Softmax(dim=1)
 
-
     def forward(self, x):
         x = self.network(x)
         return self.softmax(x)
+
+
+# class FusionModel(nn.Module):
+
+#     def __init__(self, input_size, hidden_sizes, output_size, dropout_prob=0.5):
+#         super().__init__()
+#         layers = []
+#         current_size = input_size
+#         for hidden_size in hidden_sizes:
+#             layers.append(nn.Linear(current_size, hidden_size))
+#             layers.append(nn.ReLU())
+#             layers.append(nn.Dropout(dropout_prob))
+#             current_size = hidden_size
+#         layers.append(nn.Linear(current_size, output_size))
+#         self.network = nn.Sequential(*layers)
+#         self.softmax = nn.Softmax(dim=1)
+
+
+#     def forward(self, x):
+#         x = self.network(x)
+#         return self.softmax(x)

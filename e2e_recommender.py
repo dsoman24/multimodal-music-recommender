@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from models.data_provider import DataProvider
 from models.metadata_model import MetadataModel
+from models.lyrics_model import LyricsModel
 from models.fusion import FusionStep
 from models.train import FusionModelTrainer
 from models.recommender import Recommender, RecommenderEvaluator
@@ -57,10 +58,16 @@ class E2ERecommender:
             },
             debug=self.debug
         )
-        embeddings_df = metadata_model.get_metadata_embeddings()
-        # TODO: add lyrics embeddings here and to return array
-        metadata_embedding = np.array(embeddings_df['metadata_embedding'].tolist())
-        return [metadata_embedding]
+        metadata_embeddings_df = metadata_model.get_metadata_embeddings()
+        metadata_embedding = np.array(metadata_embeddings_df['metadata_embedding'].tolist())
+        lyrics_model = LyricsModel(
+            common_track_ids=self.data_provider.lyrics_df['song_id'].tolist(),
+            embedding_technique='roberta',
+        )
+        lyrics_embeddings_df = lyrics_model.get_lyrics_embeddings()
+        lyrics_embedding = np.array(lyrics_embeddings_df['embedding'].tolist())
+
+        return [metadata_embedding, lyrics_embedding]
 
     def fusion_step(self, multimodal_features):
         # 3. Fusion Step
@@ -87,7 +94,7 @@ class E2ERecommender:
             hidden_sizes=self.train_config.get('hidden_sizes', [128, 256, 512]),
             num_classes=self.num_classes,  # make sure this is equal to the number of training classes generated
             config=self.train_config,
-            debug=False
+            debug=self.debug
         )
         trainer.train()
         self.add_to_log({

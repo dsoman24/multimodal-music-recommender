@@ -1,9 +1,15 @@
+import numpy as np
+from sklearn.decomposition import PCA
 from tqdm import tqdm
 from models.fusion import FusionModel
 
 import torch
 from torch import nn
 import matplotlib.pyplot as plt
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from sklearn.utils.class_weight import compute_class_weight
+from sklearn.preprocessing import StandardScaler
 
 EVAL_RATE = 10
 DEFAULT_CONFIG = {
@@ -20,10 +26,22 @@ class FusionModelTrainer:
         self.train_labels = train_labels
         self.test_data = test_data
         self.test_labels = test_labels
-        self.model = FusionModel(input_size=train_data.shape[1], hidden_sizes=hidden_sizes, output_size=num_classes, dropout_prob=config.get("dropout_prob", DEFAULT_CONFIG["dropout_prob"]))
+
+        # perform scaling.
+        scaler = StandardScaler()
+        scaler.fit(self.train_data)
+        self.train_data = scaler.transform(self.train_data)
+        self.test_data = scaler.transform(self.test_data)
+
+        # perform PCA to reduce dimensionality of features.
+        pca = PCA(n_components=0.95)
+        self.train_data = pca.fit_transform(self.train_data)
+        self.test_data = pca.transform(self.test_data)
+
+        self.model = FusionModel(input_size=self.train_data.shape[1], hidden_sizes=hidden_sizes, output_size=num_classes, dropout_prob=config.get("dropout_prob", DEFAULT_CONFIG["dropout_prob"]))
         self.config = config
         self.epochs_trained = 0
-        assert len(train_data) == len(train_labels), "Data and labels must have the same length."
+        assert len(self.train_data) == len(self.train_labels), "Data and labels must have the same length."
 
         self.train_accuracies = []
         self.test_accuracies = []
@@ -35,7 +53,9 @@ class FusionModelTrainer:
     def train(self):
         self._print_debug("Training Fusion Model")
         # Train the fusion model using the training data and labels
-        criterion = nn.CrossEntropyLoss()
+        class_weights = compute_class_weight('balanced', classes=np.array(range(len(set(self.train_labels)))), y=self.train_labels).astype(np.float32)
+        class_weights = torch.tensor(class_weights).to(device)
+        criterion = nn.CrossEntropyLoss(weight=class_weights)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.get("learning_rate", DEFAULT_CONFIG["learning_rate"]))
 
         inputs = torch.tensor(self.train_data, dtype=torch.float32)
@@ -50,9 +70,9 @@ class FusionModelTrainer:
             loss.backward()
             optimizer.step()
 
-            self._print_debug(f"Epoch [{self.epochs_trained + epoch + 1}/{self.epochs_trained + num_epochs}], Loss: {loss.item():.4f}")
 
             if epoch % EVAL_RATE == 0:
+                self._print_debug(f"Epoch [{self.epochs_trained + epoch + 1}/{self.epochs_trained + num_epochs}], Loss: {loss.item():.4f}")
                 _, predicted = torch.max(outputs, 1)
                 accuracy = (predicted == labels).sum().item() / len(labels)
                 self.train_accuracies.append(accuracy)
