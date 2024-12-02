@@ -10,6 +10,7 @@
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from sklearn.metrics import roc_auc_score
 
 
 class Recommender:
@@ -102,6 +103,8 @@ class RecommenderEvaluator:
 
     def evaluate(self, n=500):
         mAP = self._mean_average_precision(n=n)
+        # AUC = self._area_under_roc_curve(n=n)
+        # return {'mAP': mAP, 'AUC': AUC}
         return {'mAP': mAP}
 
     def _mean_average_precision(self, n=500):
@@ -121,3 +124,20 @@ class RecommenderEvaluator:
             if num_hits > 0:
                 average_precisions.append(score / min(len(relevant), 10))
         return np.mean(average_precisions) if average_precisions else 0.0
+
+    # def _area_under_roc_curve(self, n=500):
+    #     users = self.recommender.user_data_df['user_id'].unique()
+    #     auc_scores = []
+    #     for user in tqdm(users, desc=f"Computing AUC with top {n} recommendations per user"):
+    #         recommended = self.recommender.recommend(user, n, omit_listened_to=False)
+    #         if recommended is None:
+    #             continue
+    #         relevant = set(self.recommender.user_data_df[self.recommender.user_data_df['user_id'] == user]['song_id'])
+    #         all_songs = self.recommender.predictions_df['song_id']
+    #         y_true = all_songs.isin(relevant).astype(int)
+    #         y_scores = self.recommender.predictions_df['prediction'].apply(lambda x: np.dot(np.array(x), self.recommender._generate_fingerprint(user) if self.recommender._generate_fingerprint(user) is not None else np.zeros_like(x)))
+    #         if len(set(y_true)) < 2:
+    #             continue
+    #         auc = roc_auc_score(y_true, y_scores)
+    #         auc_scores.append(auc)
+    #     return np.mean(auc_scores) if auc_scores else 0.0

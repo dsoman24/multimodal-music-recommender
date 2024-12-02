@@ -118,6 +118,9 @@ class E2ERecommender:
         """
         Executes the entire pipeline
         """
+        self.add_to_log({
+            'execution_start_datetime': time.strftime("%Y-%m-%d %H:%M:%S")
+        })
         # 1. Generate training classes
         print("Training Classes Step")
         self.training_classes_step()
@@ -139,6 +142,7 @@ class E2ERecommender:
         print("Recommender System Step")
         self.recommender_system_step(trainer)
 
+        print(f"Saving output to {E2E_OUTPUT_PATH}/execution_{self.fingerprint}")
         # Save the log
         self.save_log()
         # save training plot

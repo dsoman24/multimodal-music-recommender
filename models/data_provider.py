@@ -103,8 +103,8 @@ class DataProvider:
         Returns cluster labels.
         """
         self._print_debug(f"Clustering {col}.")
-        if self.clustering_method == 'kmeans' and 'n_classes' not in config:
-           config['n_classes'] = 10
+        if self.clustering_method == 'kmeans' and 'n_clusters' not in config:
+           config['n_clusters'] = 10
         if self.clustering_method == 'dbscan':
             if 'eps' not in config:
                 config['eps'] = 0.5
